@@ -78,7 +78,7 @@ def transcribe(audio_path, keywords):
                 timestamps=True,
                 word_confidence=True,
                 keywords=keywords,
-                keywords_threshold=0).get_result()
+                keywords_threshold=0).get_result()['results']
         # returned DetailedResponse example:
         # {'results':
         #   [{
@@ -103,10 +103,10 @@ def transcribe(audio_path, keywords):
         #   'result_index': 0
         # }
         # When keywords are not spotted, the alternative results cannot be reliable either. Discard them.
-        if results["results"][0]["keywords_result"]:
-            key = list(results["results"][0]["keywords_result"].keys())[0]  # the spotted keyword
-            return results["results"][0]["keywords_result"][key][0]  # word, start and end time, and confidence
-        return {}
+        if results and 'keywords_result' in results[0] and results[0]['keywords_result']:
+            key = list(results[0]['keywords_result'].keys())[0]  # the spotted keyword
+            return results[0]["keywords_result"][key][0]  # word, start and end time, and confidence
+        return {'normalized_text': '', 'start_time': '', 'confidence': '', 'end_time': ''}
 
 
 if __name__ == '__main__':
@@ -124,10 +124,10 @@ if __name__ == '__main__':
         line = 1
         for row in csv_reader:
             line += 1  # current line number
-            if line < 1:  # skip some lines before the rows of interest
-                continue
-            if line > 10:  # skip some lines after the rows of interest
-                break
+            # if line < 1:  # skip some lines before the rows of interest
+            #     continue
+            # if line > 1000:  # skip some lines after the rows of interest
+            #     break
 
             # C:\Users\LCNL-279-1\Desktop\exp_secondary/Data/rep1*/trgt_audio/rep1*.wav
             path1, path2, path3 = row['audio_path'].split('/')[-3:]
@@ -136,5 +136,3 @@ if __name__ == '__main__':
             transcript = transcribe(audio_path, keywords[row['img']])
             # write original columns and ['kws_word', 'kws_start_t', 'kws_conf', 'kws_end_t']
             csv_writer.writerow(list(row.values()) + list(transcript.values()))
-
-
